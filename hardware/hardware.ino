@@ -53,10 +53,7 @@
 #define BTN2      26
 #define BTN3      27
 
-//Object Instantation 
-DHT dht(DHTPIN, DHTTYPE);
-Adafruit_BMP280 bmp;
-TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
+
 
 // MQTT CLIENT CONFIG
 static const char* pubtopic = "620156144";                         // Add your ID number here
@@ -65,13 +62,13 @@ static const char* mqtt_server = "dbs.msjrealtms.com";             // Broker IP 
 static uint16_t mqtt_port = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid = "MonaConnect";        // Add your Wi-Fi ssid
-const char* password = "";  // Add your Wi-Fi password
+const char* ssid = "sandra";        // Add your Wi-Fi ssid
+const char* password = "lui2nick";  // Add your Wi-Fi password
 
 // TASK HANDLES
 TaskHandle_t xMQTT_Connect = NULL;
 TaskHandle_t xNTPHandle = NULL;
-TaskHandle_t xLOOPHandle = NULL;
+TaskHandle_t xLOOPHandle = NULL;  
 TaskHandle_t xUpdateHandle = NULL;
 TaskHandle_t xButtonCheckeHandle = NULL;
 
@@ -84,6 +81,16 @@ void initialize(void);
 bool publish(const char *topic, const char *payload); // PUBLISH MQTT MESSAGE(PAYLOAD) TO A TOPIC
 void vButtonCheck( void * pvParameters );
 void vUpdate( void * pvParameters ); 
+bool isNumber(double number);
+
+void displayValues(double dhtTemperature, double bmpTemperature, double pressure, double humidity, int moisture);
+
+
+//Object Instantation 
+DHT dht(DHTPIN, DHTTYPE);
+Adafruit_BMP280 bmp;
+TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
+TFT_eSprite img = TFT_eSprite(&tft);
 
 
 //############### IMPORT HEADER FILES ##################
@@ -95,18 +102,10 @@ void vUpdate( void * pvParameters );
 #include "mqtt.h"
 #endif
 
-//Global Variables
-float  dhtTemperature = 0;
-double  bmpTemperature = 0;
-float  humidity = 0;
-double  pressure = 0;
-int     moisture = 0;
-
 //Setup Function
 void setup(){
 
   Serial.begin(115200);
-  // initialize();           // INIT WIFI, MQTT & NTP 
   dht.begin();            // Initialise DHT
   bmp.begin(0x76);        // Initialise DHT SPI
 
@@ -114,8 +113,9 @@ void setup(){
   tft.init();
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE);
-  tft.setTextSize(2);
   tft.setRotation(1);
+  img.createSprite(320,120);
+  img.setTextSize(2);
 
   /* ENABLE PULL-UP RESISTORS */
   pinMode(BTN1,INPUT_PULLUP);
@@ -128,40 +128,14 @@ void setup(){
                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
 
-  vButtonCheckFunction(); // UNCOMMENT IF USING BUTTONS THEN ADD LOGIC FOR INTERFACING WITH BUTTONS IN THE vButtonCheck FUNCTION
-  // divideDisplay();
+  // vButtonCheckFunction(); // UNCOMMENT IF USING BUTTONS THEN ADD LOGIC FOR INTERFACING WITH BUTTONS IN THE vButtonCheck FUNCTION
+  initialize();           // INIT WIFI, MQTT & NTP 
 
 }
 
 void loop(){
 
-  dhtTemperature  = dht.readTemperature();
-  bmpTemperature  = bmp.readTemperature(); 
-  pressure        = bmp.readPressure()/100;
-  humidity        = dht.readHumidity();
-
-  float val   = analogRead(SoilPin);
-
-  moisture    = map(val, 3300, 1500, 0, 100);
-      
-
-  if (moisture >= 100) {
-    moisture = 100;
-  } 
-  
-  else if (moisture <= 0) {
-    moisture = 0;
-  }
-
-  Serial.printf("DHT sensor temp: %.2f C\n", dhtTemperature);
-  Serial.printf("BMP sensor temp: %.2f C\n", bmpTemperature);
-  Serial.printf("Pressure: %.2f hPa\n",     pressure);
-  Serial.printf("Humidity: %.2f %\n",       humidity);
-  Serial.printf("Moisture: %d %\n",         moisture);
-
-  displayValues();
-
-  // vTaskDelay(1000 / portTICK_PERIOD_MS); 
+  vTaskDelay(1000 / portTICK_PERIOD_MS); 
 }
 
 //####################################################################
@@ -189,16 +163,13 @@ void vUpdate( void * pvParameters )  {
  
     for( ;; ) {
 
-
       // Task code goes here.   
-      dhtTemperature  = dht.readTemperature();
-      bmpTemperature  = bmp.readTemperature();
-      pressure        = bmp.readPressure();
-      humidity        = dht.readHumidity();
+      double dhtTemperature  = dht.readTemperature();
+      double bmpTemperature  = bmp.readTemperature();
+      double pressure        = bmp.readPressure()/100;
+      double humidity        = dht.readHumidity();
 
-      float val = analogRead(SoilPin);
-
-      moisture = map(val, 3300, 1500, 0, 100);
+      int moisture = map(analogRead(SoilPin), 3300, 1500, 0, 100);
       
 
       if (moisture >= 100){
@@ -209,24 +180,32 @@ void vUpdate( void * pvParameters )  {
         moisture = 0;
       }
 
-      // PUBLISH to topic every second.  
-      StaticJsonDocument<1000> doc;
-      char message[1000] = {0};
-
-      // Add key:value pairs to JSon object
-      doc["id"] = "620156144";
-      doc["timestamp"] = getTimeStamp();
-      doc["dhtTemperature"] = dhtTemperature;
-      doc["bmpTemperature"] = bmpTemperature;
-      doc["humidity"] = humidity;
-      doc["pressure"] = pressure;
-      doc["moisture"] = moisture;
+      displayValues(dhtTemperature, bmpTemperature, pressure, humidity, moisture);
 
 
-      serializeJson(doc, message);  // Seralize / Covert JSon object to JSon string and store in char* array
+      if (isNumber(dhtTemperature)){
+        
 
-      if (mqtt.connected()) {
-        publish(pubtopic, message);
+        // PUBLISH to topic every second.  
+        StaticJsonDocument<1000> doc;
+        char message[1000] = {0};
+
+        // Add key:value pairs to JSon object
+        doc["id"] = "620156144";
+        doc["timestamp"] = getTimeStamp();
+        doc["dhtTemperature"] = dhtTemperature;
+        doc["bmpTemperature"] = bmpTemperature;
+        doc["humidity"] = humidity;
+        doc["pressure"] = pressure;
+        doc["moisture"] = moisture;
+
+
+        serializeJson(doc, message);  // Seralize / Covert JSon object to JSon string and store in char* array
+
+        if (mqtt.connected()) {
+          publish(pubtopic, message);
+        }
+
       }
 
 
@@ -279,26 +258,22 @@ bool publish(const char *topic, const char *payload){
   return res;
 }
 
-void displayValues() {
-  tft.fillRect(0, 0, 320, 120, TFT_BLACK);
-  tft.setCursor(0, 0);
-  tft.printf("DHT sensor temp: %.2f C\n", dhtTemperature);
-  tft.printf("BMP sensor temp: %.2f C\n", bmpTemperature);
-  tft.printf("Pressure: %.2lf hPa\n", pressure);
-  tft.printf("Humidity: %.2f %%\n", humidity);
-  tft.printf("Moisture: %d %%\n", moisture);
-  delay(675);
+void displayValues(double dhtTemperature, double bmpTemperature, double pressure, double humidity, int moisture) {
+  img.fillRect(0, 0, 320, 120, TFT_BLACK);
+  img.setCursor(0, 0);
+  img.printf("DHT sensor temp: %.2f C\n", dhtTemperature);
+  img.printf("BMP sensor temp: %.2f C\n", bmpTemperature);
+  img.printf("Pressure: %.2lf hPa\n", pressure);
+  img.printf("Humidity: %.2f %%\n", humidity);
+  img.printf("Moisture: %d %%\n", moisture);
+  
+  img.pushSprite(0,0);
 }
 
-// void divideDisplay(){
-//   tft.drawLine(0,120,320,120,TFT_BLUE);
-
-//   for(unsigned char i = 1; i<3; i++){
-//     tft.drawRoundRect(0,0,160,120,TFT_BLUE);
-//   }
-
-//   for(unsigned char i = 1; i<3; i++){
-//     tft.drawLine(106*i,120,106*i,240,TFT_BLUE);
-//   }
-// }
-
+bool isNumber(double number) {
+  char item[20];
+  snprintf(item, sizeof(item), "%f\n", number);
+  if (isdigit(item[0]))
+    return true;
+  return false;
+}

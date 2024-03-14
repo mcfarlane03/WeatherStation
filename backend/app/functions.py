@@ -48,13 +48,27 @@ class DB:
 
 
     ####################
-    # LAB 4 FUNCTIONS  #
+    # DATABASE UTIL FUNCTIONS  #
     ####################
     
-    # 1. CREATE FUNCTION TO INSERT DATA IN TO THE RADAR COLLECTION
+    # 1. CREATE FUNCTION TO INSERT DATA IN TO THE COLLECTION
+
+    def addUpdate(self, data):
+        '''ADD/UPDATE DOCUMENT IN TO THE COLLECTION'''
+        try:
+            remotedb = self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password, self.server, self.port), tls=self.tls)
+            result = remotedb.ELET2415.weather.insert_one(data)
+        except Exception as e:
+            msg = str(e)
+            if "duplicate" not in msg:
+                print("addUpdate error ", msg)
+            return False
+        else:
+            return True
+
 
     
-    # 2. CREATE FUNCTION TO RETRIEVE ALL DOCUMENTS FROM RADAR COLLECT BETWEEN SPECIFIED DATE RANGE. MUST RETURN A LIST OF DOCUMENTS
+    # 2. CREATE FUNCTION TO RETRIEVE ALL DOCUMENTS FROM COLLECT BETWEEN SPECIFIED DATE RANGE. MUST RETURN A LIST OF DOCUMENTS
 
 
     # 3. CREATE A FUNCTION TO COMPUTE THE ARITHMETIC AVERAGE ON THE 'reserve' FEILED/VARIABLE, USING ALL DOCUMENTS FOUND BETWEEN SPECIFIED START AND END TIMESTAMPS. RETURNS A LIST WITH A SINGLE OBJECT INSIDE

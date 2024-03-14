@@ -24,6 +24,7 @@ static char deviceName[50]   = "H"; // HARDWARE
 void vButtonCheckFunction( void ); 
 void vUpdateFunction( void ); 
 
+
 /* create an instance of PubSubClient client */ 
 WiFiClient espClient; 
 PubSubClient mqtt(espClient); 
@@ -131,7 +132,7 @@ void vLOOPFunction( void ) {
                     ( void * ) 1,       // Parameter passed into the task. 
                     15,                  // Priority at which the task is created. 
                     &xLOOPHandle,        // Used to pass out the created task's handle. 
-                    0);                 // ESP Core to run task on. 
+                    1);                 // ESP Core to run task on. 
 
     if( xReturned == pdPASS ){  
       // The task was created.  Use the task's handle to delete the task. 
@@ -193,8 +194,8 @@ void initialize(void){
   Serial.println("\n\n***** Wi-Fi CONNECTED! *****\n\n");
    
   initMQTT();          // INIT MQTT  
-  // vUpdateFunction();
-  
+  vUpdateFunction();
+   
 }
 
 /*
@@ -282,3 +283,5 @@ void vUpdateFunction( void ) {
       Serial.println("UNABLE TO CREATE vUpdate TASK"); 
     }
 }
+
+ 
