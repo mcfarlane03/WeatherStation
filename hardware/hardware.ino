@@ -58,12 +58,12 @@
 // MQTT CLIENT CONFIG
 static const char* pubtopic = "620156144";                         // Add your ID number here
 static const char* subtopic[] = { "620156144_sub", "/elet2415" };  // Array of Topics(Strings) to subscribe to
-static const char* mqtt_server = "dbs.msjrealtms.com";             // Broker IP address or Domain name as a String
+static const char* mqtt_server = "www.yanacreations.com";             // Broker IP address or Domain name as a String
 static uint16_t mqtt_port = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid = "sandra";        // Add your Wi-Fi ssid
-const char* password = "lui2nick";  // Add your Wi-Fi password
+const char* ssid = "MonaConnect";        // Add your Wi-Fi ssid
+const char* password = "";  // Add your Wi-Fi password
 
 // TASK HANDLES
 TaskHandle_t xMQTT_Connect = NULL;
@@ -164,8 +164,7 @@ void vUpdate( void * pvParameters )  {
     for( ;; ) {
 
       // Task code goes here.   
-      double dhtTemperature  = dht.readTemperature();
-      double bmpTemperature  = bmp.readTemperature();
+      double temperature     = dht.readTemperature();
       double pressure        = bmp.readPressure()/100;
       double humidity        = dht.readHumidity();
 
@@ -180,10 +179,10 @@ void vUpdate( void * pvParameters )  {
         moisture = 0;
       }
 
-      displayValues(dhtTemperature, bmpTemperature, pressure, humidity, moisture);
+      displayValues(temperature, pressure, humidity, moisture);
 
 
-      if (isNumber(dhtTemperature)){
+      if (isNumber(temperature)){
         
 
         // PUBLISH to topic every second.  
@@ -193,8 +192,7 @@ void vUpdate( void * pvParameters )  {
         // Add key:value pairs to JSon object
         doc["id"] = "620156144";
         doc["timestamp"] = getTimeStamp();
-        doc["dhtTemperature"] = dhtTemperature;
-        doc["bmpTemperature"] = bmpTemperature;
+        doc["temperature"] = temperature;
         doc["humidity"] = humidity;
         doc["pressure"] = pressure;
         doc["moisture"] = moisture;
@@ -258,11 +256,10 @@ bool publish(const char *topic, const char *payload){
   return res;
 }
 
-void displayValues(double dhtTemperature, double bmpTemperature, double pressure, double humidity, int moisture) {
+void displayValues(double dhtTemperature, double pressure, double humidity, int moisture) {
   img.fillRect(0, 0, 320, 120, TFT_BLACK);
   img.setCursor(0, 0);
   img.printf("DHT sensor temp: %.2f C\n", dhtTemperature);
-  img.printf("BMP sensor temp: %.2f C\n", bmpTemperature);
   img.printf("Pressure: %.2lf hPa\n", pressure);
   img.printf("Humidity: %.2f %%\n", humidity);
   img.printf("Moisture: %d %%\n", moisture);

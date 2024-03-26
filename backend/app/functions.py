@@ -65,20 +65,218 @@ class DB:
             return False
         else:
             return True
+        
+    # 2. CREATE FUNCTION TO RETRIEVE DATA FROM THE COLLECTION WITHIN RANGE
+    
+    def getAllInRange(self,start, end):
+        '''RETURNS A LIST OF OBJECTS. THAT FALLS WITHIN THE START AND END DATE RANGE'''
+        try:
+            start=int(start)
+            end=int(end)
+            remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result      = list(remotedb.ELET2415.weather.find({"timestamp": {'$gte': start, '$lte': end}},{'_id':0}).sort('timestamp', 1))
+        except Exception as e:
+            msg = str(e)
+            print("getAllInRange error ",msg)            
+        else:                  
+            return result
+        
+
+    def humidityMMAR(self,start, end):
+        '''RETURNS MIN, MAX, AVG AND RANGE FOR HUMIDITY. THAT FALLS WITHIN THE START AND END DATE RANGE'''
+        try:
+            start=int(start)
+            end=int(end)
+            remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result      = list(remotedb.ELET2415.weather.aggregate( [
+            {
+                '$match': {
+                    'timestamp': {
+                        '$gte': start, 
+                        '$lte': end
+                    }
+                }
+            }, {
+                '$group': {
+                    '_id': 'humidity', 
+                    'humidity': {
+                        '$push': "$$ROOT.humidity"
+                    }
+                }
+            }, {
+                '$project': {
+                    'max': {
+                        '$max': '$humidity'
+                    }, 
+                    'min': {
+                        '$min': '$humidity'
+                    }, 
+                    'avg': {
+                        '$avg': '$humidity'
+                    }, 
+                    'range': {
+                        '$subtract': [
+                            {
+                                '$max': '$humidity'
+                            }, {
+                                '$min': '$humidity'
+                            }
+                        ]
+                    }
+                }
+            }
+        ]))
+        except Exception as e:
+            msg = str(e)
+            print("humidityMMAS error ",msg)            
+        else:                  
+            return result
+        
+    def temperatureMMAR(self,start, end):
+        '''RETURNS MIN, MAX, AVG AND RANGE FOR TEMPERATURE. THAT FALLS WITHIN THE START AND END DATE RANGE'''
+        try:
+            start=int(start)
+            end=int(end)
+            remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result = list(remotedb.ELET2415.weather.aggregate([{ '$match': { 'timestamp': { '$gte': start, '$lte': end } } }, { '$group': { '_id': 0, 'temperature': { '$push': '$$ROOT.temperature' } } }, { '$project': { 'max': { '$max': '$temperature' }, 'min': { '$min': '$temperature' }, 'avg': { '$avg': '$temperature' }, 'range': { '$subtract': [ { '$max': '$temperature' }, { '$min': '$temperature' } ] } } } ]))
+            #result = list(remotedb.ELET2415.climo.aggregate([ { '$match': {} } ]))
+        except Exception as e:
+            msg = str(e)
+            print("temperatureMMAS error ",msg)            
+        else:                  
+            return result
+
+    def pressureMMAR(self,start, end):
+        '''RETURNS MIN, MAX, AVG AND RANGE FOR PRESSURE. THAT FALLS WITHIN THE START AND END DATE RANGE'''
+        try:
+            start=int(start)
+            end=int(end)
+            remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result      = list(remotedb.ELET2415.weather.aggregate( [
+            {
+                '$match': {
+                    'timestamp': {
+                        '$gte': start, 
+                        '$lte': end
+                    }
+                }
+            }, {
+                '$group': {
+                    '_id': 'pressure', 
+                    'pressure': {
+                        '$push': "$$ROOT.pressure"
+                    }
+                }
+            }, {
+                '$project': {
+                    'max': {
+                        '$max': '$pressure'
+                    }, 
+                    'min': {
+                        '$min': '$pressure'
+                    }, 
+                    'avg': {
+                        '$avg': '$pressure'
+                    }, 
+                    'range': {
+                        '$subtract': [
+                            {
+                                '$max': '$pressure'
+                            }, {
+                                '$min': '$pressure'
+                            }
+                        ]
+                    }
+                }
+            }
+        ]))
+        except Exception as e:
+            msg = str(e)
+            print("pressureMMAS error ",msg)            
+        else:                  
+            return result
+
+    def soilMMAR(self,start, end):
+        '''RETURNS MIN, MAX, AVG AND RANGE FOR SOIL MOISTURE. THAT FALLS WITHIN THE START AND END DATE RANGE'''
+        try:
+            start=int(start)
+            end=int(end)
+            remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result      = list(remotedb.ELET2415.weather.aggregate( [
+            {
+                '$match': {
+                    'timestamp': {
+                        '$gte': start, 
+                        '$lte': end
+                    }
+                }
+            }, {
+                '$group': {
+                    '_id': 'moisture',
+                    'moisture': {
+                        '$push': "$$ROOT.moisture"
+                    }
+                }
+            }, {
+                '$project': {
+                    'max': {
+                        '$max': '$moisture'
+                    }, 
+                    'min': {
+                        '$min': '$moisture'
+                    }, 
+                    'avg': {
+                        '$avg': '$moisture'
+                    }, 
+                    'range': {
+                        '$subtract': [
+                            {
+                                '$max': '$moisture'
+                            }, {
+                                '$min': '$moisture'
+                            }
+                        ]
+                    }
+                }
+            }
+        ]))
+
+        except Exception as e:
+            msg = str(e)
+            print("soilMMAS error ",msg)
+        else:
+            return result
+            
 
 
-    
-    # 2. CREATE FUNCTION TO RETRIEVE ALL DOCUMENTS FROM COLLECT BETWEEN SPECIFIED DATE RANGE. MUST RETURN A LIST OF DOCUMENTS
+    def frequencyDistro(self,variable,start, end):
+        '''RETURNS THE FREQUENCY DISTROBUTION FOR A SPECIFIED VARIABLE WITHIN THE START AND END DATE RANGE'''
+        try:
+            start=int(start)
+            end=int(end)
+            remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result      = list(remotedb.ELET2415.weather.aggregate([{
+                            '$match': {
+                            'timestamp': { '$gte': start, '$lte': end}
+                            }
+                        },
+                     
+                        {
+                            '$bucket': {
+                                'groupBy': f"${variable}",
+                                'boundaries': list(range(101)),
+                                'default': 'outliers',
+                                'output': {
+                                    'count': { '$sum': 1 }
+                                }
+                            }
+                        }]))
+        except Exception as e:
+            msg = str(e)
+            print("frequencyDistro error ",msg)            
+        else:                  
+            return result
 
-
-    # 3. CREATE A FUNCTION TO COMPUTE THE ARITHMETIC AVERAGE ON THE 'reserve' FEILED/VARIABLE, USING ALL DOCUMENTS FOUND BETWEEN SPECIFIED START AND END TIMESTAMPS. RETURNS A LIST WITH A SINGLE OBJECT INSIDE
-    
-    
-    # 4. CREATE A FUNCTION THAT INSERT/UPDATE A SINGLE DOCUMENT IN THE 'code' COLLECTION WITH THE PROVIDED PASSCODE
-   
-    
-    # 5. CREATE A FUNCTION THAT RETURNS A COUNT, OF THE NUMBER OF DOCUMENTS FOUND IN THE 'code' COLLECTION WHERE THE 'code' FEILD EQUALS TO THE PROVIDED PASSCODE.
-    #    REMEMBER, THE SCHEMA FOR THE SINGLE DOCUMENT IN THE 'code' COLLECTION IS {"type":"passcode","code":"0070"}
 
 
    

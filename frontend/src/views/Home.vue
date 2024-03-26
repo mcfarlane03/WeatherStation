@@ -6,8 +6,8 @@
 
       <div class="text-body-2 font-weight-light mb-n1">Welcome to</div>
 
-      <h1 class="text-h2 font-weight-bold">IoT Development Platform</h1>
-      <div class="text-body-1 font-weight-light mt-1">Internet of Things</div>
+      <h1 class="text-h2 font-weight-bold">Weather Station</h1>
+      <div class="text-body-1 font-weight-light mt-1"></div>
  
 
       <div class="py-14" />
