@@ -56,13 +56,13 @@
 
 
 // MQTT CLIENT CONFIG
-static const char* pubtopic = "620156144";                         // Add your ID number here
-static const char* subtopic[] = { "620156144_sub", "/elet2415" };  // Array of Topics(Strings) to subscribe to
+static const char* pubtopic = "";                         // Add your ID number here
+static const char* subtopic[] = { "", "/elet2415" };  // Array of Topics(Strings) to subscribe to
 static const char* mqtt_server = "www.yanacreations.com";             // Broker IP address or Domain name as a String
 static uint16_t mqtt_port = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid = "MonaConnect";        // Add your Wi-Fi ssid
+const char* ssid = "";        // Add your Wi-Fi ssid
 const char* password = "";  // Add your Wi-Fi password
 
 // TASK HANDLES
@@ -145,14 +145,6 @@ void vButtonCheck( void * pvParameters )  {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 );     
       
     for( ;; ) {
-        // Add code here to check if a button(S) is pressed
-        // then execute appropriate function if a button is pressed  
-
-        // 1. Implement button1  functionality
-
-        // 2. Implement button2  functionality
-
-        // 3. Implement button3  functionality
        
         vTaskDelay(200 / portTICK_PERIOD_MS);  
     }
@@ -231,12 +223,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // PRINT RECEIVED MESSAGE
   Serial.printf("Payload : %s \n",received);
-
- 
-  // CONVERT MESSAGE TO JSON
-
-
-  // PROCESS MESSAGE
 
 }
 
